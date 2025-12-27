@@ -42,16 +42,32 @@ interface Request {
   isOverdue?: boolean
 }
 
+import { ChatDrawer } from "@/components/chat-drawer"
+
 export default function ManagerDashboard() {
   const [equipment, setEquipment] = useState<Equipment[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [requests, setRequests] = useState<Request[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [selectedChatRequest, setSelectedChatRequest] = useState<{ id: string; subject: string } | null>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
+  useEffect(() => {
+     // Get user from local storage safely
+     const userStr = localStorage.getItem("user")
+     if (userStr && userStr !== "undefined") {
+       try {
+         setCurrentUser(JSON.parse(userStr))
+       } catch (e) {
+         console.error("Failed to parse user", e)
+       }
+     }
+  }, [])
+
   useEffect(() => {
     fetchData()
   }, [])
-
   const fetchData = async () => {
     try {
       const [equipmentRes, teamsRes, requestsRes] = await Promise.all([
@@ -132,7 +148,11 @@ export default function ManagerDashboard() {
                   </div>
                   <div className="space-y-3">
                     {requests.slice(0, 5).map((request) => (
-                      <div key={request._id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div 
+                        key={request._id} 
+                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => setSelectedChatRequest({ id: request._id, subject: request.subject })}
+                      >
                         <div className="flex-1">
                           <p className="font-medium text-sm">{request.subject}</p>
                           <p className="text-xs text-muted-foreground">{request.equipment?.name}</p>
@@ -156,8 +176,7 @@ export default function ManagerDashboard() {
                   </div>
                 </Card>
               </motion.div>
-
-              {/* Equipment Status */}
+{/* ... Equipment Status Card ... */}
               <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                 <Card className="p-6 glass">
                   <h3 className="font-semibold text-lg mb-4">Equipment Status</h3>
@@ -305,7 +324,10 @@ export default function ManagerDashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <RequestCard request={request} />
+                    <RequestCard 
+                      request={request}
+                      onClick={() => setSelectedChatRequest({ id: request._id, subject: request.subject })}
+                    />
                   </motion.div>
                 ))}
               </div>
@@ -313,6 +335,14 @@ export default function ManagerDashboard() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ChatDrawer 
+        requestId={selectedChatRequest?.id || null}
+        requestSubject={selectedChatRequest?.subject || ""}
+        isOpen={!!selectedChatRequest}
+        onClose={() => setSelectedChatRequest(null)}
+        currentUserId={currentUser?.id}
+      />
     </DashboardLayout>
   )
 }

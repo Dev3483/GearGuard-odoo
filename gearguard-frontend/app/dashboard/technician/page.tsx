@@ -16,6 +16,8 @@ import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
+import { ChatDrawer } from "@/components/chat-drawer"
+
 interface Request {
     _id: string
     subject: string
@@ -54,6 +56,63 @@ export default function TechnicianDashboard() {
         } finally {
             setLoading(false)
         }
+  _id: string
+  subject: string
+  description?: string
+  stage: "new" | "in_progress" | "repaired" | "scrap"
+  urgency: "low" | "normal" | "high"
+  type: "corrective" | "preventive"
+  scheduledDate?: string
+  equipment?: { name: string; _id: string }
+  technician?: { name: string; _id: string }
+  createdAt: string
+  isOverdue?: boolean
+}
+
+const stages = [
+  { id: "new", title: "New Requests", color: "blue" },
+  { id: "in_progress", title: "In Progress", color: "warning" },
+  { id: "repaired", title: "Completed", color: "success" },
+  { id: "scrap", title: "Scrapped", color: "destructive" },
+]
+
+const urgencyColors = {
+  low: "text-blue-500",
+  normal: "text-gray-500",
+  high: "text-red-500",
+}
+
+export default function TechnicianDashboard() {
+  const [requests, setRequests] = useState<Request[]>([])
+  const [loading, setLoading] = useState(true)
+  const [draggedItem, setDraggedItem] = useState<string | null>(null)
+  
+  const [selectedChatRequest, setSelectedChatRequest] = useState<{ id: string; subject: string } | null>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
+  useEffect(() => {
+    // Get user from local storage safely
+    const userStr = localStorage.getItem("user")
+    if (userStr && userStr !== "undefined") {
+      try {
+        setCurrentUser(JSON.parse(userStr))
+      } catch (e) {
+        console.error("Failed to parse user", e)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchRequests()
+  }, [])
+  const fetchRequests = async () => {
+    try {
+      const response = await axios.get("/requests/assigned")
+      setRequests(response.data.data || response.data || [])
+    } catch (error: any) {
+      toast.error("Failed to load requests")
+    } finally {
+      setLoading(false)
     }
 
     const handleStatusUpdate = async (requestId: string, newStage: string) => {
@@ -195,4 +254,105 @@ export default function TechnicianDashboard() {
             </div>
         </DashboardLayout>
     )
+                    <div className={cn("h-1 rounded-full", `bg-${stage.color}`)} />
+                  </div>
+
+                  <div
+                    className="flex-1 space-y-3 min-h-[400px] p-2 rounded-lg bg-muted/20"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, stage.id)}
+                  >
+                    {stageRequests.map((request, index) => {
+                      const isOverdue = request.isOverdue || (request.scheduledDate && new Date(request.scheduledDate) < new Date() && request.stage !== "repaired")
+
+                      return (
+                        <motion.div
+                          key={request._id}
+                          draggable
+                          onDragStart={(e:any) => handleDragStart(e, request._id)}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          whileHover={{ scale: 1.02 }}
+                          className={cn("cursor-move", draggedItem === request._id && "opacity-50")}
+                        >
+                          <div onClick={() => setSelectedChatRequest({ id: request._id, subject: request.subject })}>
+                              <Card
+                                className={cn(
+                                  "p-4 glass-hover",
+                                  isOverdue && stage.id !== "repaired" && "border-destructive/50 animate-pulse-soft",
+                                )}
+                              >
+                                <div className="space-y-3">
+                                  <div>
+                                    <h4 className="font-semibold text-sm mb-1">{request.subject}</h4>
+                                    {request.description && (
+                                      <p className="text-xs text-muted-foreground line-clamp-2">{request.description}</p>
+                                    )}
+                                  </div>
+
+                                  {request.equipment && (
+                                    <div className="text-xs text-muted-foreground">
+                                      <span className="font-medium">Equipment:</span> {request.equipment.name}
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center justify-between text-xs pt-2 border-t border-border/50">
+                                    <span className={cn("font-medium", urgencyColors[request.urgency || "normal"])}>
+                                      {(request.urgency || "normal").toUpperCase()}
+                                    </span>
+                                    {request.scheduledDate && (
+                                      <span className={cn(isOverdue && "text-destructive font-semibold")}>
+                                        {format(new Date(request.scheduledDate), "MMM dd")}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Mobile: Stage selector */}
+                                  <div className="lg:hidden">
+                                    <Select
+                                      value={request.stage}
+                                      onValueChange={(value) => handleStageChange(request._id, value)}
+                                    >
+                                      <SelectTrigger className="h-8 text-xs">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {stages.map((s) => (
+                                          <SelectItem key={s.id} value={s.id}>
+                                            {s.title}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                </div>
+                              </Card>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+
+                    {stageRequests.length === 0 && (
+                      <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+                        No requests
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <ChatDrawer 
+        requestId={selectedChatRequest?.id || null}
+        requestSubject={selectedChatRequest?.subject || ""}
+        isOpen={!!selectedChatRequest}
+        onClose={() => setSelectedChatRequest(null)}
+        currentUserId={currentUser?.id}
+      />
+    </DashboardLayout>
+  )
 }
