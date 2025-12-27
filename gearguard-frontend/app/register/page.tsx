@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,9 +10,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Wrench, Loader2 } from "lucide-react"
+import { ModeToggle } from "@/components/mode-toggle"
 
 export default function RegisterPage() {
   const [name, setName] = useState("")
@@ -20,7 +22,21 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [role, setRole] = useState("requester")
   const [loading, setLoading] = useState(false)
-  const { register } = useAuth()
+  const { register, user } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (user) {
+      const roleRoutes: Record<string, string> = {
+        admin: "/dashboard/admin",
+        manager: "/dashboard/manager",
+        technician: "/dashboard/technician",
+        requester: "/dashboard/requester",
+      }
+      router.push(roleRoutes[user.role] || "/dashboard/requester")
+    }
+  }, [user, router])
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,7 +64,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/10 p-4 relative">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
