@@ -27,6 +27,7 @@ The system allows organizations to:
 -   **Framework**: Express.js
 -   **Database**: MongoDB Atlas (Cloud)
 -   **ORM**: Mongoose
+-   **Real-time**: Socket.io
 -   **Security**: JWT, BcryptJS, Helmet, Morgan, Express Rate Limit
 -   **Validation**: Express Validator
 -   **Documentation**: Swagger / OpenAPI 3.0
@@ -74,7 +75,7 @@ GearGuard-odoo/
    ```
 3. Create a `.env` file in `gearguard-backend/` with the following:
    ```env
-   PORT=5000
+   PORT=5001
    MONGO_URI=your_mongodb_atlas_uri
    JWT_SECRET=your_secure_secret
    NODE_ENV=development
@@ -98,7 +99,11 @@ GearGuard-odoo/
    ```bash
    npm install
    ```
-3. Start the application:
+3. Create a `.env.local` file in `gearguard-frontend/` to point to the backend:
+   ```env
+   NEXT_PUBLIC_API_URL=http://localhost:5001
+   ```
+4. Start the application:
    ```bash
    npm run dev
    ```
@@ -119,7 +124,7 @@ GearGuard-odoo/
 
 ## 📖 API Documentation
 Once the backend is running, you can access the interactive Swagger documentation at:
-**[http://localhost:5000/docs](http://localhost:5000/docs)**
+**[http://localhost:5001/docs](http://localhost:5001/docs)**
 
 ---
 
@@ -130,3 +135,4 @@ Once the backend is running, you can access the interactive Swagger documentatio
 -   **Smart Request Actions**: Changing a request to "Scrapped" status automatically marks the associated equipment as "Scrapped" in the database.
 -   **Virtual Fields**: The `isOverdue` property is computed on-the-fly based on the `scheduledDate`.
 -   **Robust Auth**: Token-based authentication with auto-refresh and defensive `localStorage` handling.
+-   **Real-Time Chat**: Context-aware WebSocket messaging system (Socket.io) allowing instantaneous communication between Requesters, Technicians, and Managers within specific Request contexts.
