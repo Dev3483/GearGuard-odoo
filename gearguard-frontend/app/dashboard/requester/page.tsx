@@ -6,6 +6,7 @@ import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { StatCard } from "@/components/stat-card"
 import { RequestCard } from "@/components/request-card"
+import { ChatDrawer } from "@/components/chat-drawer"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -118,6 +119,21 @@ export default function RequesterDashboard() {
     completed: requests.filter((r) => r.stage === "repaired").length,
     overdue: requests.filter((r) => r.isOverdue || (r.scheduledDate && new Date(r.scheduledDate) < new Date() && r.stage !== "repaired")).length,
   }
+
+  const [selectedChatRequest, setSelectedChatRequest] = useState<{ id: string; subject: string } | null>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
+  useEffect(() => {
+    // Get user from local storage safely
+    const userStr = localStorage.getItem("user")
+    if (userStr && userStr !== "undefined") {
+      try {
+        setCurrentUser(JSON.parse(userStr))
+      } catch (e) {
+        console.error("Failed to parse user", e)
+      }
+    }
+  }, [])
 
   return (
     <DashboardLayout>
@@ -271,7 +287,10 @@ export default function RequesterDashboard() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                   >
-                    <RequestCard request={request} />
+                    <RequestCard 
+                      request={request} 
+                      onClick={() => setSelectedChatRequest({ id: request._id, subject: request.subject })}
+                    />
                   </motion.div>
                 ))}
               </div>
@@ -290,7 +309,10 @@ export default function RequesterDashboard() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <RequestCard request={request} />
+                      <RequestCard 
+                        request={request}
+                        onClick={() => setSelectedChatRequest({ id: request._id, subject: request.subject })}
+                      />
                     </motion.div>
                   ))}
               </div>
@@ -298,6 +320,15 @@ export default function RequesterDashboard() {
           ))}
         </Tabs>
       </div>
+      
+      {/* Chat Drawer */}
+      <ChatDrawer 
+        requestId={selectedChatRequest?.id || null}
+        requestSubject={selectedChatRequest?.subject || ""}
+        isOpen={!!selectedChatRequest}
+        onClose={() => setSelectedChatRequest(null)}
+        currentUserId={currentUser?.id}
+      />
     </DashboardLayout>
   )
 }

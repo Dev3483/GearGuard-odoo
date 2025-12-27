@@ -9,9 +9,25 @@ const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
 // Connect Database
+const http = require('http'); // Import http module
+const { Server } = require('socket.io'); // Import socket.io
+
+// Connect Database
 connectDB();
 
 const app = express();
+const server = http.createServer(app); // Create HTTP server
+
+// Initialize Socket.io
+const io = new Server(server, {
+    cors: {
+        origin: "*", // Allow all origins for now, or match your frontend URL "http://localhost:3000"
+        methods: ["GET", "POST"]
+    }
+});
+
+// Pass io to socket handler
+require('./socket/chatSocket')(io);
 
 // Security Middleware
 app.use(helmet());
@@ -38,13 +54,15 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/teams', require('./routes/teamRoutes'));
 app.use('/api/equipment', require('./routes/equipmentRoutes'));
 app.use('/api/requests', require('./routes/requestRoutes'));
+app.use('/api/chat', require('./routes/chatRoutes'));
 
 // Error Handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
     console.log(`API Documentation available at http://localhost:${PORT}/docs`);
+    console.log(`Socket.io running`);
 });
