@@ -65,6 +65,12 @@ export function Sidebar() {
             icon: Settings,
             roles: ["manager", "technician", "requester"],
         },
+        {
+    title: "Analytics",
+    href: "/analytics",
+    icon: ChartLine,
+    roles: ["admin"],
+  },
     ]
 
     const filteredNavItems = navItems.filter((item) => user && item.roles.includes(user.role))
