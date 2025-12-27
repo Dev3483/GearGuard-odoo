@@ -54,6 +54,7 @@ export default function RequesterDashboard() {
     urgency: "normal",
     type: "corrective",
     scheduledDate: "",
+    duration: 0,
   })
 
   useEffect(() => {
@@ -103,6 +104,7 @@ export default function RequesterDashboard() {
         urgency: "normal",
         type: "corrective",
         scheduledDate: "",
+        duration: 0,
       })
       fetchData()
     } catch (error: any) {
@@ -198,12 +200,23 @@ export default function RequesterDashboard() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="dueDate">Scheduled Date</Label>
+                    <Label htmlFor="dueDate">Scheduled Time</Label>
                     <Input
                       id="dueDate"
-                      type="date"
+                      type="datetime-local"
                       value={formData.scheduledDate}
                       onChange={(e) => setFormData({ ...formData, scheduledDate: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="duration">Duration (Hours)</Label>
+                    <Input
+                      id="duration"
+                      type="number"
+                      placeholder="e.g. 2"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
                     />
                   </div>
                 </div>

@@ -2,22 +2,37 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Wrench, Loader2 } from "lucide-react"
+import { ModeToggle } from "@/components/mode-toggle"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
+  const { login, user } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (user) {
+      const roleRoutes: Record<string, string> = {
+        admin: "/dashboard/admin",
+        manager: "/dashboard/manager",
+        technician: "/dashboard/technician",
+        requester: "/dashboard/requester",
+      }
+      router.push(roleRoutes[user.role] || "/dashboard/requester")
+    }
+  }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,8 +59,12 @@ export default function LoginPage() {
     }
   }
 
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-accent/10 p-4 relative">
+      <div className="absolute top-4 right-4">
+        <ModeToggle />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

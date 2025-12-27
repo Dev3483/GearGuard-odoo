@@ -1,25 +1,22 @@
 "use client"
 
-import { Sidebar } from "./sidebar"
-import { Topbar } from "./topbar"
+import { Sidebar } from "@/components/layout/sidebar"
+import { Topbar } from "@/components/layout/topbar"
+import { useSidebar } from "@/context/sidebar-context"
 import { motion } from "framer-motion"
-import type { ReactNode } from "react"
 
-interface DashboardLayoutProps {
-  children: ReactNode
-}
+export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { collapsed } = useSidebar()
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex">
       <Sidebar />
-      <div className="ml-64">
+      <div className="flex-1 flex flex-col min-h-screen">
         <Topbar />
         <motion.main
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="pt-16 p-6 min-h-screen"
+          className="flex-1 p-6 pt-20 transition-all duration-300 ease-in-out"
+          initial={false}
+          animate={{ marginLeft: collapsed ? 80 : 256 }}
         >
           {children}
         </motion.main>
